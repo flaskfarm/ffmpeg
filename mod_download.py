@@ -1,3 +1,5 @@
+from email import header
+
 from support import SupportSubprocess
 from support.expand.ffmpeg import SupportFfmpeg
 
@@ -13,6 +15,7 @@ class ModuleDownload(PluginModuleBase):
         f'timeout_minute': '60',
 
         f'download_url': '',
+        f'download_curl': '',
     }
 
 
@@ -31,8 +34,8 @@ class ModuleDownload(PluginModuleBase):
 
             return render_template(f'{P.package_name}_{name}_{page_name}.html', arg=arg)
         except Exception as e:
-            logger.error(f'Exception:{str(e)}')
-            logger.error(traceback.format_exc())
+            P.logger.error(f'Exception:{str(e)}')
+            P.logger.error(traceback.format_exc())
             return render_template('sample.html', title=f"{P.package_name}/{name}/{page_name}")
 
     
@@ -51,7 +54,6 @@ class ModuleDownload(PluginModuleBase):
                 ret['modal'] = result['log']
               
         elif command == 'download':
-            
             filename = arg1
             url = arg2
             P.ModelSetting.set('download_url', arg2)
@@ -65,25 +67,102 @@ class ModuleDownload(PluginModuleBase):
             ret['json'] = ffmpeg.start()
             #logger.warning(d(ret))
             return jsonify(ret)
+        elif command == 'download_curl':
+            filename = arg1
+            curl = arg2
+            P.ModelSetting.set('download_curl', curl)
+            lines = curl.split('\n')
+
+            logger.warning(d(lines))
+            headers = {}
+            for line in lines:
+                line = line.replace('--compressed', '')
+                line = line.strip(' \\')
+                logger.debug(line)
+                if line.startswith('curl'):
+                    url = line.replace('curl ', '').strip("'")
+                    logger.error(url)
+                elif line.startswith('-H'):
+                    tmp = line.replace('-H ', '').strip("'").split(': ')
+                    if tmp[0].startswith('sec-'):
+                        continue
+                    if tmp[0] in ['if-none-match']:
+                        continue
+                    headers[tmp[0].strip()] = tmp[1].strip()
+            
+            #logger.warning(d(headers))
+
+            ffmpeg = SupportFfmpeg(url, filename, 
+                #callback_id=f"{P.package_name}_{time.time()}",
+                callback_function=self.callback_function,
+                max_pf_count = P.ModelSetting.get('max_pf_count'),
+                save_path = os.path.join(F.config['path_data'], P.ModelSetting.get('save_path')),
+                timeout_minute = P.ModelSetting.get('timeout_minute'),
+                headers=headers,
+            )
+            ret['json'] = ffmpeg.start()
+            
+            #logger.warning(d(ret))
+            return jsonify(ret)
         elif command == 'list':
             ret = []
             for ins in SupportFfmpeg.get_list():
                 ret.append(ins.get_data())
-
-            self.socketio_callback("status", "aaaa")
-            
+        elif command == 'stop':
+            P.logger.error(arg1)
+            ffmpeg = SupportFfmpeg.get_instance_by_idx(arg1)
+            P.logger.error(ffmpeg)
+            ffmpeg.stop()
+            ret['data'] = ffmpeg.get_data()
         return jsonify(ret)
 
-
+    # TODO: 동작 확인 필요
     def process_api(self, sub, req):
-        pass
+        ret = {'ret':'success'}
+        try: 
+            if sub == 'download':
+                url = request.args.get('url')
+                filename = request.args.get('filename')
+                callback_id = request.args.get('id')
+                save_path = request.args.get('save_path')
+                if save_path is None:
+                    save_path = save_path = os.path.join(F.config['path_data'], P.ModelSetting.get('save_path'))
+                if not os.path.exists(save_path):
+                    os.makedirs(save_path)    
+                ffmpeg = SupportFfmpeg(url, filename, 
+                    callback_id = callback_id,
+                    max_pf_count = P.ModelSetting.get('max_pf_count'),
+                    save_path = save_path,
+                    timeout_minute = P.ModelSetting.get('timeout_minute'),
+                )
+                ffmpeg.start()
+                ret['data'] = ffmpeg.get_data()
+            elif sub == 'stop':
+                callback_id = request.args.get('id')
+                ffmpeg = SupportFfmpeg.get_instance_by_callback_id(callback_id)
+                ffmpeg.stop()
+                ret['data'] = ffmpeg.get_data()
+            elif sub == 'status':
+                ret = {}
+                callback_id = request.args.get('id')
+                ffmpeg = SupportFfmpeg.get_instance_by_callback_id(callback_id)
+                ret['data'] = ffmpeg.get_data()
+        except Exception as e:
+            P.logger.error(f'Exception:{str(e)}')
+            P.logger.error(traceback.format_exc())
+            ret['ret'] = 'exception'
+            ret['log'] = traceback.format_exc()    
+        return jsonify(ret)
     
+
     def plugin_load(self):
         SupportFfmpeg.initialize(P.ModelSetting.get('ffmpeg_path'), os.path.join(F.config['path_data'], 'tmp'), self.callback_function, P.ModelSetting.get_int('max_pf_count'))
+
 
     def plugin_unload(self):
         SupportFfmpeg.all_stop()
         
+
     def setting_save_after(self, change_list):
         SupportFfmpeg.initialize(P.ModelSetting.get('ffmpeg_path'), os.path.join(F.config['path_data'], 'tmp'), self.callback_function, P.ModelSetting.get_int('max_pf_count'))
                 
@@ -99,10 +178,8 @@ class ModuleDownload(PluginModuleBase):
             elif args['status'] == SupportFfmpeg.Status.READY:
                 data = {'type':'info', 'msg' : '다운로드중 Duration(%s)' % args['data']['duration_str'] + '<br>' + args['data']['save_fullpath'], 'url':'/ffmpeg/download/list'}
                 socketio.emit("notify", data, namespace='/framework', broadcast=True)
-                # 1번에서 리스트화면, 2번에서 추가시 1번도 추가되도록
                 refresh_type = 'add'    
         elif args['type'] == 'last':
-            
             if args['status'] == SupportFfmpeg.Status.WRONG_URL:
                 data = {'type':'warning', 'msg' : '잘못된 URL입니다'}
                 socketio.emit("notify", data, namespace='/framework', broadcast=True)
@@ -146,11 +223,5 @@ class ModuleDownload(PluginModuleBase):
         elif args['type'] == 'normal':
             if args['status'] == SupportFfmpeg.Status.DOWNLOADING:
                 refresh_type = 'status'
-        """
-        if refresh_type is not None:
-            P.logger.info(refresh_type)
-            socketio.emit(refresh_type, args['data'], namespace=f'{P.package_name}/download', broadcast=True)
-        """
+        #P.logger.info(refresh_type)
         self.socketio_callback(refresh_type, args['data'])
-
-        #socketio_callback.

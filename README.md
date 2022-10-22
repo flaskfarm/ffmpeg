@@ -15,3 +15,18 @@
   * 허용 Packet Fail 수  
     네트워크 연결 상태에 따라 다운로드가 실패가 발생할 수 있다.  
     실패를 몇 번 허용 할지에 대한 옵션
+
+----
+
+### API
+  1. download : 요청  
+    - callback_id : callback_id  
+    - url : 동영상 URL  
+    - filename : 저장 파일명
+    - save_path : 저장 폴더. 절대경로. 생략지 기본 저장 폴더  
+  
+  2. status : 상태  
+    - callback_id  
+
+  3. stop : 중지  
+    - callback_id
