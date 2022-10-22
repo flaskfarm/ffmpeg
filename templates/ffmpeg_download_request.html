@@ -31,8 +31,8 @@ $("body").on('click', '#download_url_btn', function(e){
 
 $("body").on('click', '#download_curl_btn', function(e){
   e.preventDefault();
-  if ($("#url").val().startsWith('http') == false) {
-    $.notify('<strong>URL을 입력하세요.</strong>', {
+  if ($("#curl").val().startsWith('curl') == false) {
+    $.notify('<strong>curl 데이터를 입력하세요.</strong>', {
       type: 'warning'
     });
     return;
