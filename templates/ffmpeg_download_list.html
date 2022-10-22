@@ -67,7 +67,6 @@ $(document).ready(function(){
       str = ''
       for(i in data) {
         str += make_item(data[i]);
-        str += '</tr>'
       }
     }
     $("#list").html(str);
@@ -95,6 +94,7 @@ function make_item(data) {
   str += '</tr>';
   str += '<tr class="collapse tableRowHoverOff" style="cursor: pointer;"  id="collapse_' + data.idx + '">';
   str += make_item2(data);
+  str += '</tr>';
   return str;
 }
 
@@ -151,7 +151,7 @@ function get_detail(data) {
 }
 
 function button_html(data) {
-  console.log(data)
+  //console.log(data)
   str = '';
   if (data.status_str == 'DOWNLOADING') {
     str = j_button('stop_btn', '중지', {'idx':data.idx}, 'danger', false, false);
