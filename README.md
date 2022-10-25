@@ -19,7 +19,7 @@
 ----
 
 ### API
-  1. download : 요청  
+  1. download : 요청
     - callback_id : callback_id  
     - url : 동영상 URL  
     - filename : 저장 파일명
