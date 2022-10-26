@@ -96,7 +96,7 @@ class ModuleDownload(PluginModuleBase):
                 #callback_id=f"{P.package_name}_{time.time()}",
                 callback_function=self.callback_function,
                 max_pf_count = P.ModelSetting.get('max_pf_count'),
-                save_path = os.path.join(F.config['path_data'], P.ModelSetting.get('save_path')),
+                save_path = ToolUtil.make_path(P.ModelSetting.get('save_path')),
                 timeout_minute = P.ModelSetting.get('timeout_minute'),
                 headers=headers,
             )
@@ -126,7 +126,7 @@ class ModuleDownload(PluginModuleBase):
                 callback_id = request.args.get('id')
                 save_path = request.args.get('save_path')
                 if save_path is None:
-                    save_path = save_path = os.path.join(F.config['path_data'], P.ModelSetting.get('save_path'))
+                    save_path = ToolUtil.make_path(P.ModelSetting.get('save_path'))
                 if not os.path.exists(save_path):
                     os.makedirs(save_path)    
                 ffmpeg = SupportFfmpeg(url, filename, 
