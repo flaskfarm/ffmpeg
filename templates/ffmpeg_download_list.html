@@ -57,7 +57,7 @@ $(document).ready(function(){
     button_html(data);
   });
 
-  globalSendCommand('list', null, null, null, null, function(data) {
+  globalSendCommand('list', null, null, null, function(data) {
     current_data = data;
     $("#list").html('');
     console.log(data)
@@ -77,7 +77,7 @@ $(document).ready(function(){
 $("body").on('click', '#stop_btn', function(e){
   e.stopPropagation();
   e.preventDefault();
-  globalSendCommand('stop', $(this).data('idx'), null, null, null, function(ret){
+  globalSendCommand('stop', $(this).data('idx'), null, null, function(ret){
     refresh_item(ret.data);
   });
 });

@@ -52,6 +52,7 @@ class ModuleDownload(PluginModuleBase):
                 result = SupportSubprocess.execute_command_return(cmd)
                 P.logger.info(result)
                 ret['modal'] = result['log']
+                ret['title'] = 'ffmpeg 버전'
               
         elif command == 'download':
             filename = arg1
