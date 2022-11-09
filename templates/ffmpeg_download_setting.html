@@ -4,6 +4,8 @@
 {{ macros.m_button_group([['globalSettingSaveBtn', '설정 저장']])}}
 {{ macros.m_row_start('5') }}
 {{ macros.m_row_end() }}
+{{ macros.m_hr() }}
+
 <form id='setting' name='setting'>
 <div class="tab-content" id="nav-tabContent">
 {{ macros.setting_input_text_and_buttons('ffmpeg_path', 'FFMPEG 경로', [['ffmpeg_version_btn', '버전확인'], ['select_binary_path_btn', '파일 선택', [['path_data', arg['path_data']]] ]], value=arg['ffmpeg_path']) }}
