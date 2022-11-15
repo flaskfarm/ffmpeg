@@ -60,7 +60,6 @@ $(document).ready(function(){
   globalSendCommand('list', null, null, null, function(data) {
     current_data = data;
     $("#list").html('');
-    console.log(data)
     if (data.length == 0) {
       str = "<tr><td colspan='10'><h4>작업이 없습니다.</h4><td><tr>";
     } else {
@@ -99,7 +98,6 @@ function make_item(data) {
 }
 
 function make_item1(data) {
-  //console.log(data);
   str = '';
   str += '<td scope="col" style="width:5%; text-align:center;">'+ data.idx + '</td>';
   str += '<td scope="col" style="width:8%; text-align:center;">'+ data.callback_id + '</td>';
@@ -151,7 +149,6 @@ function get_detail(data) {
 }
 
 function button_html(data) {
-  //console.log(data)
   str = '';
   if (data.status_str == 'DOWNLOADING') {
     str = j_button('stop_btn', '중지', {'idx':data.idx}, 'danger', false, false);
