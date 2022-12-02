@@ -2,6 +2,7 @@ from email import header
 
 from support import SupportSubprocess
 from support.expand.ffmpeg import SupportFfmpeg
+from support.expand.ffprobe import SupportFfprobe
 
 from .setup import *
 
@@ -10,6 +11,7 @@ name = 'download'
 class ModuleDownload(PluginModuleBase):
     db_default = {
         f'ffmpeg_path': 'ffmpeg',
+        f'ffprobe_path': 'ffprobe',
         f'max_pf_count': '0',
         f'save_path': "download",
         f'timeout_minute': '60',
@@ -53,6 +55,17 @@ class ModuleDownload(PluginModuleBase):
                 P.logger.info(result)
                 ret['modal'] = result['log']
                 ret['title'] = 'ffmpeg 버전'
+        elif command == 'ffprobe_version':
+            ffmpeg_path = P.ModelSetting.get('ffprobe_path')
+            if os.path.exists(ffmpeg_path) == False:
+                ret['ret'] = 'danger'
+                ret['msg'] = "파일이 없습니다."
+            else:
+                cmd = [ffmpeg_path, '-version']
+                result = SupportSubprocess.execute_command_return(cmd)
+                P.logger.info(result)
+                ret['modal'] = result['log']
+                ret['title'] = 'ffprobe 버전'
               
         elif command == 'download':
             filename = arg1
@@ -157,7 +170,10 @@ class ModuleDownload(PluginModuleBase):
     
 
     def plugin_load(self):
-        SupportFfmpeg.initialize(P.ModelSetting.get('ffmpeg_path'), os.path.join(F.config['path_data'], 'tmp'), self.callback_function, P.ModelSetting.get_int('max_pf_count'))
+        self.support_init()
+
+    def plugin_load_celery(self):    
+        self.support_init()
 
 
     def plugin_unload(self):
@@ -165,9 +181,12 @@ class ModuleDownload(PluginModuleBase):
         
 
     def setting_save_after(self, change_list):
-        SupportFfmpeg.initialize(P.ModelSetting.get('ffmpeg_path'), os.path.join(F.config['path_data'], 'tmp'), self.callback_function, P.ModelSetting.get_int('max_pf_count'))
+        self.support_init()
                 
     
+    def support_init(self):
+        SupportFfmpeg.initialize(P.ModelSetting.get('ffmpeg_path'), os.path.join(F.config['path_data'], 'tmp'), self.callback_function, P.ModelSetting.get_int('max_pf_count'))
+        SupportFfprobe.initialize(P.ModelSetting.get('ffprobe_path'))
 
     def callback_function(self, **args):
         refresh_type = None
