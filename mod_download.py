@@ -95,7 +95,6 @@ class ModuleDownload(PluginModuleBase):
                 logger.debug(line)
                 if line.startswith('curl'):
                     url = line.replace('curl ', '').strip("'")
-                    logger.error(url)
                 elif line.startswith('-H'):
                     tmp = line.replace('-H ', '').strip("'").split(': ')
                     if tmp[0].startswith('sec-'):
@@ -123,9 +122,7 @@ class ModuleDownload(PluginModuleBase):
             for ins in SupportFfmpeg.get_list():
                 ret.append(ins.get_data())
         elif command == 'stop':
-            P.logger.error(arg1)
             ffmpeg = SupportFfmpeg.get_instance_by_idx(arg1)
-            P.logger.error(ffmpeg)
             ffmpeg.stop()
             ret['data'] = ffmpeg.get_data()
         return jsonify(ret)
